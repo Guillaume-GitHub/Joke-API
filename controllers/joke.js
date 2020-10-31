@@ -1,3 +1,4 @@
+const joke = require("../models/joke.js");
 const Joke = require("../models/joke.js");
 
 exports.create = (req, res, next) => {
@@ -19,6 +20,22 @@ exports.getById = (req, res, next) => {
    Joke.findById(req.params.id)
       .then((doc) => res.status(200).json(doc.transform()))
       .catch((err) => res.sendStatus(err.kind === "ObjectId" ? 404 : 500));
+};
+
+exports.getOne = (req, res, next) => {
+   Joke.find()
+      .estimatedDocumentCount()
+      .then((totalDoc) => {
+         let random = Math.floor(Math.random() * totalDoc);
+         console.log(random);
+         Joke.findOne()
+            .skip(random)
+            .then((doc) => res.status(200).json(doc.transform()))
+            .catch((err) =>
+               res.sendStatus(err.kind === "ObjectId" ? 404 : 500)
+            );
+      })
+      .catch((error) => res.status(500).json(error));
 };
 
 exports.getAll = (req, res, next) => {
