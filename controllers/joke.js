@@ -15,6 +15,36 @@ exports.create = (req, res, next) => {
       .catch((error) => res.status(400).json(error));
 };
 
+exports.importCSV = (req, res, next) => {
+   const encodedData = req.body.data;
+   const buffer = Buffer.from(encodedData, 'base64');
+   const decodedData = buffer.toString('utf-8');
+
+   const parsedFile = decodedData.split('\n');
+   const headers = parsedFile.shift().split(';');
+
+   let jokes = [];
+
+   parsedFile.forEach(item => {
+      let joke = {};
+      const values = item.split(';');
+
+      for (let index = 0; index < headers.length; index++) {
+         if(values[headers.indexOf('joke')] !== '') {
+            joke[headers[index]] = values[index];
+         }
+      }
+
+      if (JSON.stringify(joke) !== JSON.stringify({})){
+         jokes.push(joke)
+      } 
+   });
+
+   Joke.insertMany(jokes)
+   .then(() => res.sendStatus(201))
+   .catch((error) => res.status(400).json(error));
+};
+
 exports.getById = (req, res, next) => {
    // add GET method logic
    Joke.findById(req.params.id)
@@ -27,7 +57,6 @@ exports.getOne = (req, res, next) => {
       .estimatedDocumentCount()
       .then((totalDoc) => {
          let random = Math.floor(Math.random() * totalDoc);
-         console.log(random);
          Joke.findOne()
             .skip(random)
             .then((doc) => res.status(200).json(doc.transform()))
